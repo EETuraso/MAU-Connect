@@ -1,0 +1,35 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Extract MAU Connect source",
+			"type": "shell",
+			"command": "node scripts/extract-source.mjs",
+			"problemMatcher": []
+		},
+		{
+			"label": "Install MAU Connect dependencies",
+			"type": "shell",
+			"command": "corepack pnpm install --frozen-lockfile",
+			"problemMatcher": []
+		},
+		{
+			"label": "Retry MAU Connect dependency install",
+			"type": "shell",
+			"command": "corepack pnpm install --frozen-lockfile",
+			"problemMatcher": []
+		},
+		{
+			"label": "Check MAU Connect installation",
+			"type": "shell",
+			"command": "if (Test-Path node_modules\\.bin\\next.cmd) { Write-Output 'next-present' } else { Write-Output 'next-missing' }",
+			"problemMatcher": []
+		},
+		{
+			"label": "Check dependencies",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs'); console.log(fs.existsSync('node_modules/.bin/next.cmd')?'next-present':'next-missing')\"",
+			"problemMatcher": []
+		}
+	]
+}
