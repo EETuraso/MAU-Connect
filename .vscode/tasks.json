@@ -30,6 +30,13 @@
 			"type": "shell",
 			"command": "node -e \"const fs=require('fs'); console.log(fs.existsSync('node_modules/.bin/next.cmd')?'next-present':'next-missing')\"",
 			"problemMatcher": []
+		},
+		{
+			"label": "Start MAU Connect locally",
+			"type": "shell",
+			"command": "corepack pnpm dev",
+			"isBackground": true,
+			"problemMatcher": []
 		}
 	]
 }

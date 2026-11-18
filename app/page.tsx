@@ -1,13 +1,14 @@
 'use client';
 import {useState,useEffect,useCallback,FormEvent} from 'react';
 import {useRouter} from 'next/navigation';
-import {Search,MapPin,Heart,Plus,ArrowUpRight,ArrowRight,Smartphone,Laptop,Shirt,Armchair,Car,House,Sparkles,Bike,LayoutGrid,ShieldCheck,SlidersHorizontal,X,Check,Package,Users,Settings,LogOut,Eye,Trash2,Flag,Clock,Upload,Store,CheckCircle2,type LucideIcon} from 'lucide-react';
+import {Search,MapPin,Heart,Plus,ArrowUpRight,ArrowRight,Smartphone,Laptop,Shirt,Armchair,Car,House,Sparkles,Bike,LayoutGrid,ShieldCheck,SlidersHorizontal,X,Check,Package,Users,Settings,LogOut,Eye,Trash2,Flag,Clock,Upload,Store,FileText,CheckCircle2,type LucideIcon} from 'lucide-react';
 import {seed,defaults,Listing} from './data';
 import {getDemoSeller,restoreDemoState,restoreSavedIds} from './demo-state';
 const icons=[LayoutGrid,Smartphone,Laptop,Shirt,Armchair,Car,House,Sparkles,Bike];
 const newId=()=>globalThis.crypto?.randomUUID?.()||`demo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const money=(n:number)=>'₦'+Number(n).toLocaleString('en-NG');
 import {demoUsers} from './demo-users';
+import type {PastQuestion} from './market-types';
 type User=typeof demoUsers[0];
 type DemoState=ReturnType<typeof restoreDemoState>;
 type AuditEntry=DemoState['audit'][number];
@@ -15,8 +16,8 @@ type Report=DemoState['reports'][number];
 type SellerContact=Pick<User,'name'|'phone'|'payment_method'|'payment_instructions'>;
 type SupportSnapshot={seller:User;listings:Listing[];expires_at:string};
 type MarketResponse=
-  | {demo:true;settings:typeof defaults}
-  | {demo:false;listings:Listing[];settings:typeof defaults;user:User|null;users?:User[];audit?:AuditEntry[]};
+  | {demo:true;settings:typeof defaults;past_questions?:PastQuestion[]}
+  | {demo:false;listings:Listing[];settings:typeof defaults;past_questions:PastQuestion[];user:User|null;users?:User[];audit?:AuditEntry[]};
 
 async function readResponse<T>(response:Response):Promise<T>{
   const data:unknown=await response.json();
@@ -34,11 +35,12 @@ async function fetchMarket(signal?:AbortSignal):Promise<MarketResponse>{
 export default function Marketplace(){
 const router=useRouter();
 const [reportTarget,setReportTarget]=useState<Listing|null>(null);
-const [ready,setReady]=useState(false),[demo,setDemo]=useState(false),[items,setItems]=useState<Listing[]>([]),[settings,setSettings]=useState(defaults),[user,setUser]=useState<User|null>(null),[users,setUsers]=useState<User[]>(demoUsers),[audit,setAudit]=useState<AuditEntry[]>([]),[reports,setReports]=useState<Report[]>([]);
+const [ready,setReady]=useState(false),[demo,setDemo]=useState(false),[items,setItems]=useState<Listing[]>([]),[pastQuestions,setPastQuestions]=useState<PastQuestion[]>([]),[settings,setSettings]=useState(defaults),[user,setUser]=useState<User|null>(null),[users,setUsers]=useState<User[]>(demoUsers),[audit,setAudit]=useState<AuditEntry[]>([]),[reports,setReports]=useState<Report[]>([]);
 const [view,setView]=useState('home'),[tab,setTab]=useState('listings'),[query,setQuery]=useState(''),[category,setCategory]=useState('All categories'),[location,setLocation]=useState('All Nigeria'),[sort,setSort]=useState('newest'),[condition,setCondition]=useState('All conditions'),[maxPrice,setMaxPrice]=useState(''),[showFilters,setShowFilters]=useState(false),[saved,setSaved]=useState<string[]>([]);
 const [modal,setModal]=useState<string|null>(null),[selected,setSelected]=useState<Listing|null>(null),[editing,setEditing]=useState<Listing|null>(null),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[contact,setContact]=useState<SellerContact|null>(null),[support,setSupport]=useState<SupportSnapshot|null>(null),[authMode,setAuthMode]=useState('signin'),[supportTarget,setSupportTarget]=useState<User|null>(null);
 const applyMarket=useCallback((data:MarketResponse)=>{
   setDemo(data.demo);
+  setPastQuestions(data.past_questions||[]);
   if(!data.demo){setItems(data.listings);setSettings(data.settings);setUser(data.user);setUsers(data.users||[]);setAudit(data.audit||[]);}
 },[]);
 async function refresh(){const data=await fetchMarket();applyMarket(data);return data;}
@@ -82,7 +84,8 @@ const sellerItems=support?support.listings:items.filter(p=>p.seller_id===user?.i
 const currentSeller=support?.seller||user;
 const dashboardTabs:[string,string,LucideIcon][]=view==='admin'?[['listings','Listings',Package],['users','Sellers',Users],['settings','Site settings',Settings],['reports','Reports',Flag],['audit','Activity log',Clock]]:[['listings','My listings',Package],['profile','Profile & payments',Settings]];
 async function submitListing(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);await run(async()=>{let images=editing?.images||[];const files=f.getAll('photos').filter((x):x is File=>x instanceof File&&x.size>0);if(files.length>5)throw new Error('Upload up to five photos');if(files.length){images=[];for(const file of files){if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>4194304)throw new Error('Use JPG, PNG or WebP images under 4MB');if(demo){const data=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(file)});images.push(data)}else{const body=new FormData();body.append('file',file);const r=await fetch('/api/market',{method:'POST',body});const d=await readResponse<{url:string}>(r);images.push(d.url)}}}if(!images.length)throw new Error('Add at least one photo');const listing={...editing,id:editing?.id||newId(),seller_id:user!.id,title:String(f.get('title')),description:String(f.get('description')),price:Number(f.get('price')),negotiable:f.get('price_type')==='negotiable',category:String(f.get('category')),location:String(f.get('location')),condition:String(f.get('condition')),images,status:'active',created_at:editing?.created_at||new Date().toISOString()};if(demo)setItems(a=>editing?a.map(p=>p.id===editing.id?listing:p):[listing,...a]);else{await api({action:'listing',listing:{...listing,id:editing?.id}});await refresh()}setModal(null);setNotice('Your listing is now live on the marketplace.');navigate('seller')})}
-return <>
+return <><div className="past-q-nav"><button className={view==='past-q'?'nav-active':''} onClick={()=>router.push('/students')}>Student Block</button></div><style>{".past-q-page{position:fixed;inset:0;z-index:200;background:var(--cream);overflow:auto;padding:40px}.past-q-page.hidden{display:none}.past-q-nav{position:absolute;top:60px;right:max(calc((100vw - 1300px)/2 + 225px),225px);z-index:5}.past-q-nav button{font-size:12px;color:var(--green);font-weight:600;padding:10px 0}.past-q-nav button:hover{text-decoration:underline;text-underline-offset:5px}@media(max-width:800px){.past-q-nav{right:125px;top:53px}.past-q-nav button{font-size:10px}}"}</style>
+<section className={view==='past-q'?'past-q-page':'past-q-page hidden'}><div className="past-q-inner"><div className="eyebrow small">MAU CONNECT ACADEMIC RESOURCE</div><h1>Past question papers</h1><p>Find practice papers by course, level, and year.</p><div className="past-q-grid">{pastQuestions.map(paper=><article className="past-q-card" key={paper.id}><FileText size={24}/><div><strong>{paper.title}</strong><small>{paper.course} · {paper.level} · {paper.year}</small></div><a className="primary" href={paper.file_url} target="_blank" rel="noreferrer">Open PDF <ArrowUpRight size={15}/></a></article>)}</div>{ready&&!pastQuestions.length&&<div className="empty"><FileText/><h3>No past questions yet</h3><p>Check back soon for papers uploaded by the administrator.</p></div>}<button className="text-button" onClick={()=>navigate('home')}>Back to marketplace</button></div></section>
 <div className="topline"><span>Your next great find is closer than you think.</span><span><ShieldCheck size={13}/> Buy local. Connect confidently.</span></div>
 <header><div className="header-inner"><button className="brand" onClick={()=>navigate('home')} aria-label="MAU Connect home"><span className="brand-icon">m<span>↗</span></span><span>{settings.site_name==='MAU Connect'?<>MAU<span className="brand-light">Connect</span></>:settings.site_name}<small>YOUR EVERYDAY MARKETPLACE</small></span></button><nav><button className={view==='home'?'nav-active':''} onClick={()=>navigate('home')}>Explore</button><button onClick={()=>{navigate('home');document.getElementById('categories')?.scrollIntoView({behavior:'smooth'})}}>Categories</button><button onClick={()=>setModal('how')}>How it works <ArrowUpRight size={13}/></button></nav><div className="header-actions"><button className="icon-button saved-button" aria-label="Saved listings" onClick={()=>navigate('saved')}><Heart size={21}/>{saved.length>0&&<i>{saved.length}</i>}</button><span className="divider"/>{user?<button className="signin" onClick={()=>navigate(user.role==='admin'?'admin':'seller')}>{user.role==='admin'?'Admin dashboard':'My dashboard'}</button>:<button className="signin" onClick={()=>{setAuthMode('signin');setModal('auth')}}>Log in / Sign up</button>}<button className="primary sell" onClick={sell}><Plus size={18}/> Sell an item</button></div></div></header>
 {demo&&<div className="demo-strip"><span><span className="live-dot"/> Interactive demo <b>·</b> Sample listings. Changes stay in this browser.</span><div><button onClick={()=>{setUser(getDemoSeller(users,demoUsers[0]));navigate('seller')}}>Try seller dashboard</button><button onClick={()=>{setUser({...demoUsers[0],id:'demo-admin',name:'Admin',role:'admin'});navigate('admin')}}>Try admin <ArrowUpRight size={12}/></button></div></div>}

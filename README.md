@@ -13,7 +13,7 @@ corepack pnpm run dev
 
 Open [the marketplace](http://127.0.0.1:3000/) or [the admin dashboard](http://127.0.0.1:3000/admin). Leave the terminal running; Ctrl+C stops the server. Production mode uses `corepack pnpm run build` followed by `corepack pnpm run start`.
 
-No environment file is required for the demo. Demo changes persist only in the current browser and do not create live accounts. Do not enter real customer information in demo mode. Copy [.env.example](./.env.example) to `.env.local` only when connecting a real backend, and fill in both Supabase variables. Blank values keep the demo available; placeholder values do not constitute a working backend.
+Copy [.env.example](./.env.example) to `.env.local` and fill in both Supabase variables before using the application. Every account, listing and admin action uses the shared Supabase backend. Missing configuration returns HTTP 503 with a visible retry message; the app never substitutes sample records or simulated accounts. Saved listing IDs are kept in the visitor's browser.
 
 For a slow connection, retry `corepack pnpm install --frozen-lockfile --network-concurrency=4 --fetch-timeout=120000` after stopping any previous installer. Existing cached downloads are reused. Keep [pnpm-lock.yaml](./pnpm-lock.yaml) and [pnpm-workspace.yaml](./pnpm-workspace.yaml) in Git: the pinned versions, seven-day release-age policy and explicit native-build allowlist must also apply on CI and Vercel.
 
@@ -30,9 +30,9 @@ corepack pnpm run build
 
 ## Connect Supabase
 
-1. Create a Supabase project. In its SQL editor, run [001_marketplace.sql](./supabase/001_marketplace.sql) once, then [002_admin_dashboard.sql](./supabase/002_admin_dashboard.sql). For an existing installation that already applied `001`, apply only `002`. The initial migration creates tables, row-level policies, admin functions and the public listing-image bucket; do not rerun it against an existing database.
+1. Create a Supabase project. In its SQL editor, run [001_marketplace.sql](./supabase/001_marketplace.sql), [002_admin_dashboard.sql](./supabase/002_admin_dashboard.sql), [003_past_questions.sql](./supabase/003_past_questions.sql), and [004_student_hub.sql](./supabase/004_student_hub.sql). For an existing installation, apply only the migrations that have not already been run.
 2. Get the project URL and **legacy anon JWT key** from Supabase Project Settings > API Keys. Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` on the server. The current REST adapter uses the anon JWT as its unauthenticated bearer token. Do not use a service-role/secret key or rename these to `NEXT_PUBLIC_*`.
-3. Configure Supabase Auth's Site URL to the deployed HTTPS origin and allow the exact local/staging redirect URLs you use. Enable email confirmation and configure production SMTP before opening public registration.
+3. Configure Supabase Auth's Site URL to the deployed HTTPS origin and allow `/reset-password` on that origin, plus the exact local/staging redirect URLs you use. Enable email confirmation and configure production SMTP before opening public registration. Supabase's default email sender is restricted and is not a public registration service. The sign-in screens link to `/reset-password`, which sends a recovery email and exchanges its verified session for secure cookies before changing the password.
 4. Register and confirm the account that will administer the marketplace. Find its UUID in Supabase Authentication > Users, and run the following in the SQL editor, substituting that exact UUID:
 
 ```sql
@@ -78,13 +78,15 @@ In repository settings, protect `main` and require the **Lint, types, tests and 
 
 4. [vercel.json](./vercel.json) supplies `corepack pnpm install --frozen-lockfile` and `corepack pnpm run build`. Leave the output directory at the Next.js default. The optional Sites/Vinext scripts are not the Vercel build path, and this app cannot be hosted as a static GitHub Pages export because it uses server routes and cookies.
 5. Deploy, then set Supabase Auth's Site URL to the resulting production domain. Environment changes apply to new deployments, so redeploy after adding or changing variables.
-6. Open `/`, `/admin` and `/api/market` on the deployment. The API should return HTTP 200 and `"demo": false` for a live backend. With both Supabase values blank the public deployment is only a browser-local demo.
+6. Open `/`, `/admin`, `/reset-password` and `/api/market` on the deployment. The API should return HTTP 200 with real listings (an empty array is valid for a new marketplace). Missing Supabase values return HTTP 503. Confirm that signed-out visitors cannot access admin controls and that an actual administrator can load the dashboard.
 
 Vercel's GitHub integration creates previews for branches and production deployments from the production branch. Keep production credentials out of Git and configure them in Vercel's environment settings. See the official [Corepack/build settings](https://vercel.com/docs/builds/configure-a-build), [supported Node runtimes](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions), [environment variables](https://vercel.com/docs/environment-variables) and [GitHub integration](https://vercel.com/docs/git/vercel-for-github) documentation.
 
 ## Verify a live release
 
 Use a staging Supabase project to verify signup/email confirmation, sign-in and logout, listing-image uploads, seller ownership isolation, admin-only access, suspension, report resolution, settings persistence and removed-listing restoration denial. Check that a seller and signed-out visitor cannot call admin actions. Repeat the important checks on the deployed preview because local unit tests do not exercise Supabase policies or Vercel infrastructure.
+
+Verify password recovery with a real inbox after configuring SMTP. Listings refresh while the page is visible and when the visitor returns to it. The application connects buyers directly to sellers; payment instructions do not charge buyers or process payments.
 
 ## Optional Sites compatibility
 
