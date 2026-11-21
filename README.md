@@ -13,7 +13,7 @@ corepack pnpm run dev
 
 Open [the marketplace](http://127.0.0.1:3000/) or [the admin dashboard](http://127.0.0.1:3000/admin). Leave the terminal running; Ctrl+C stops the server. Production mode uses `corepack pnpm run build` followed by `corepack pnpm run start`.
 
-Copy [.env.example](./.env.example) to `.env.local` and fill in both Supabase variables before using the application. Every account, listing and admin action uses the shared Supabase backend. Missing configuration returns HTTP 503 with a visible retry message; the app never substitutes sample records or simulated accounts. Saved listing IDs are kept in the visitor's browser.
+Create a local `.env.local` file and fill in both Supabase variables before using the application. Keep this file untracked; it contains environment secrets. Every account, listing and admin action uses the shared Supabase backend. Missing configuration returns HTTP 503 with a visible retry message; the app never substitutes sample records or simulated accounts. Saved listing IDs are kept in the visitor's browser.
 
 For a slow connection, retry `corepack pnpm install --frozen-lockfile --network-concurrency=4 --fetch-timeout=120000` after stopping any previous installer. Existing cached downloads are reused. Keep [pnpm-lock.yaml](./pnpm-lock.yaml) and [pnpm-workspace.yaml](./pnpm-workspace.yaml) in Git: the pinned versions, seven-day release-age policy and explicit native-build allowlist must also apply on CI and Vercel.
 
@@ -41,7 +41,7 @@ set role = 'admin'
 where id = 'YOUR_AUTH_USER_UUID';
 ```
 
-5. Sign in at `/admin`. Admin access comes from the stored profile role and is checked on the server. There is no default admin password and registration does not grant admin privileges.
+5. Sign in at `/admin` with the email and password of the confirmed Supabase Auth account you registered. Admin access comes from the stored profile role and is checked on the server. There is no default admin password, no admin password is stored in the repository, and registration does not grant admin privileges.
 
 Listing uploads accept JPEG, PNG and WebP images up to 4 MB each, leaving space for multipart overhead under the [Vercel Function body limit](https://vercel.com/docs/functions/limitations).
 
