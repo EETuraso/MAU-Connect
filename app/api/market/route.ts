@@ -62,7 +62,7 @@ export async function GET(){
   if(!url()||!key())return Response.json({error:'Supabase configuration is incomplete.'},{status:503,headers});
   try{
     const {user,token}=await identity();
-    const [listings,settings,past_questions,handouts]=await Promise.all([sb('/rest/v1/listings?select=*&order=created_at.desc',token),sb('/rest/v1/settings?id=eq.1&select=data',token),sb('/rest/v1/past_questions?select=id,title,course,level,year,file_url,created_at&order=year.desc,created_at.desc',token),sb('/rest/v1/handouts?select=id,title,course,description,file_url,created_at&order=created_at.desc',token).catch(()=>[])]);
+    const [listings,settings,past_questions,handouts]=await Promise.all([sb('/rest/v1/listings?select=*&order=created_at.desc',token),sb('/rest/v1/settings?id=eq.1&select=data',token),sb('/rest/v1/past_questions?select=id,title,course,level,year,file_url,created_at&order=year.desc,created_at.desc',token).catch(()=>[]),sb('/rest/v1/handouts?select=id,title,course,description,file_url,created_at&order=created_at.desc',token).catch(()=>[])]);
     let profile=null,users=[],audit=[],reports=[];
     if(user){
       profile=(await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`,token))[0]||null;
