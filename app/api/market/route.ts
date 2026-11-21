@@ -58,11 +58,11 @@ async function identity(){
 async function setSession(s:AuthSession){const jar=await cookies();const options={httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax' as const,path:'/'};jar.set('mau_access',s.access_token,{...options,maxAge:s.expires_in||3600});jar.set('mau_refresh',s.refresh_token,{...options,maxAge:60*60*24*30});}
 export async function GET(){
   const headers={'Cache-Control':'private, no-store'};
-  if(!url()&&!key())return Response.json({demo:true,settings:defaults},{headers});
+  if(!url()&&!key())return Response.json({demo:true,settings:defaults,listings:[],past_questions:[],handouts:[],user:null,users:[],audit:[],reports:[]},{headers});
   if(!url()||!key())return Response.json({error:'Supabase configuration is incomplete.'},{status:503,headers});
   try{
     const {user,token}=await identity();
-    const [listings,settings,past_questions]=await Promise.all([sb('/rest/v1/listings?select=*&order=created_at.desc',token),sb('/rest/v1/settings?id=eq.1&select=data',token),sb('/rest/v1/past_questions?select=id,title,course,level,year,file_url,created_at&order=year.desc,created_at.desc',token)]);
+    const [listings,settings,past_questions,handouts]=await Promise.all([sb('/rest/v1/listings?select=*&order=created_at.desc',token),sb('/rest/v1/settings?id=eq.1&select=data',token),sb('/rest/v1/past_questions?select=id,title,course,level,year,file_url,created_at&order=year.desc,created_at.desc',token),sb('/rest/v1/handouts?select=id,title,course,description,file_url,created_at&order=created_at.desc',token).catch(()=>[])]);
     let profile=null,users=[],audit=[],reports=[];
     if(user){
       profile=(await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`,token))[0]||null;
@@ -74,7 +74,7 @@ export async function GET(){
         ]);
       }
     }
-    return Response.json({demo:false,listings,settings:settings[0]?.data||defaults,past_questions,user:profile,users,audit,reports},{headers});
+    return Response.json({demo:false,listings,settings:settings[0]?.data||defaults,past_questions,handouts,user:profile,users,audit,reports},{headers});
   }catch(e){return Response.json({error:(e as Error).message},{status:400,headers});}
 }
 export async function POST(req:Request){if(!url()||!key())return Response.json({error:'Connect Supabase to enable live accounts.'},{status:503});if(req.headers.get('origin')!==new URL(req.url).origin)return Response.json({error:'Invalid origin'},{status:403});try{const content=req.headers.get('content-type')||'';if(content.includes('multipart/form-data')){const {user,token}=await identity();if(!user)throw new Error('Sign in required');const form=await req.formData();const file=form.get('file');if(form.get('kind')==='past-question'){const profile=(await sb(`/rest/v1/profiles?id=eq.${user.id}&select=*`,token))[0];if(!profile||profile.suspended||profile.role!=='admin')throw new Error('Admin access required');if(!(file instanceof File)||file.type!=='application/pdf'||file.size===0||file.size>10*1024*1024)throw new Error('Use a PDF under 10MB');const path=`${user.id}/${crypto.randomUUID()}.pdf`;await sb(`/storage/v1/object/past-questions/${path}`,token,{method:'POST',headers:{'Content-Type':file.type},body:file});return Response.json({url:`${url()}/storage/v1/object/public/past-questions/${path}`});}if(!(file instanceof File)||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size===0||file.size>4*1024*1024)throw new Error('Use a JPG, PNG or WebP image under 4MB');const path=`${user.id}/${crypto.randomUUID()}.${file.type.split('/')[1]}`;await sb(`/storage/v1/object/listings/${path}`,token,{method:'POST',headers:{'Content-Type':file.type},body:file});return Response.json({url:`${url()}/storage/v1/object/public/listings/${path}`});}

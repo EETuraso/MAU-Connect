@@ -53,9 +53,18 @@ export type PastQuestion = {
   file_url: string;
   created_at: string;
 };
+export type Handout = {
+  id: string;
+  title: string;
+  course: string;
+  description: string;
+  file_url: string;
+  created_at: string;
+};
 export type MarketResponse = {
   listings: Listing[];
   past_questions: PastQuestion[];
+  handouts: Handout[];
   settings: Settings;
   user: Profile | null;
   users: Profile[];

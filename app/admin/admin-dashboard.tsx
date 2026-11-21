@@ -3,13 +3,13 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNod
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArrowLeft, ArrowUpRight, Check, ChevronRight, Clock3, Eye, FileText, Flag, LayoutDashboard, LogOut, Package, RefreshCw, Search, Settings, ShieldCheck, Store, Trash2, Users, X } from 'lucide-react';
-import type { Listing, MarketResponse, PastQuestion, Profile } from '../market-types';
+import { ArrowLeft, ArrowUpRight, BookOpen, Check, ChevronRight, Clock3, Eye, FileText, Flag, LayoutDashboard, LogOut, Package, RefreshCw, Search, Settings, ShieldCheck, Store, Trash2, Users, X } from 'lucide-react';
+import type { Handout, Listing, MarketResponse, PastQuestion, Profile } from '../market-types';
 import styles from './admin.module.css';
 
 type Seller = Profile;
 type Data = Omit<MarketResponse, 'listings'> & { items: Listing[] };
-type Tab = 'overview' | 'listings' | 'sellers' | 'past-questions' | 'reports' | 'settings' | 'activity';
+type Tab = 'overview' | 'listings' | 'sellers' | 'past-questions' | 'handouts' | 'reports' | 'settings' | 'activity';
 type Confirmation = { title: string; description: string; label: string; payload: Record<string, unknown> };
 type Snapshot = { seller: Omit<Seller, 'role'>; listings: Listing[]; expires_at: string };
 const tabs = [
@@ -17,6 +17,7 @@ const tabs = [
   { id: 'listings', label: 'Listings', icon: Package },
   { id: 'sellers', label: 'Sellers', icon: Users },
   { id: 'past-questions', label: 'Past Q', icon: FileText },
+  { id: 'handouts', label: 'Handouts', icon: BookOpen },
   { id: 'reports', label: 'Reports', icon: Flag },
   { id: 'settings', label: 'Site settings', icon: Settings },
   { id: 'activity', label: 'Activity log', icon: Clock3 },
@@ -64,7 +65,7 @@ export default function AdminDashboard() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [settingsRevision, setSettingsRevision] = useState(0);
   const applyMarket = useCallback((market: MarketResponse) => {
-    setData({ items: market.listings, past_questions: market.past_questions, settings: market.settings, users: market.users, audit: market.audit, reports: market.reports, user: market.user });
+    setData({ items: market.listings, past_questions: market.past_questions, handouts: market.handouts, settings: market.settings, users: market.users, audit: market.audit, reports: market.reports, user: market.user });
   }, []);
   async function refresh() { applyMarket(await fetchMarket()); }
   useEffect(() => {
@@ -117,6 +118,15 @@ export default function AdminDashboard() {
       event.currentTarget.reset(); setNotice('Past question paper added.');
     });
   }
+  async function saveHandout(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); const fields = new FormData(event.currentTarget); const file = fields.get('file');
+    await run(async () => {
+      if (!(file instanceof File) || file.type !== 'application/pdf' || file.size === 0 || file.size > 10 * 1024 * 1024) throw new Error('Choose a PDF file under 10MB.');
+      const body = new FormData(); body.append('title', String(fields.get('title')).trim()); body.append('course', String(fields.get('course')).trim()); body.append('description', String(fields.get('description')).trim()); body.append('file', file);
+      await response(await fetch('/api/handouts', { method: 'POST', body }));
+      await refresh(); event.currentTarget.reset(); setNotice('Handout added.');
+    });
+  }
   async function openSupport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const reason = String(new FormData(event.currentTarget).get('reason')).trim();
     if (!supportSeller || !data) return;
@@ -145,8 +155,8 @@ export default function AdminDashboard() {
   const visibleReports = data.reports.filter(report => (status === 'all' || status === report.status) && [report.reason, data.items.find(item => item.id === report.listing_id)?.title || ''].join(' ').toLowerCase().includes(search));
   const visibleAudit = data.audit.filter(entry => [actionLabels[entry.action] || entry.action, entry.details.reason || '', entry.details.id || ''].join(' ').toLowerCase().includes(search));
   const breakdown = [...new Set(active.map(item => item.category))].map(category => ({ category, count: active.filter(item => item.category === category).length })).sort((a, b) => b.count - a.count);
-  const names: Record<Tab, string> = { overview: 'Marketplace overview', listings: 'Manage listings', sellers: 'Your seller community', 'past-questions': 'Past question papers', reports: 'Reports & moderation', settings: 'Site settings', activity: 'Activity log' };
-  const descriptions: Record<Tab, string> = { overview: 'A clear view of your marketplace and what needs your attention.', listings: 'Review every listing and keep the marketplace a good place to trade.', sellers: 'Manage seller access and help your community with confidence.', 'past-questions': 'Publish and manage academic papers for students.', reports: 'Review community concerns and resolve issues with care.', settings: 'Make the marketplace yours. Changes appear on the public website.', activity: 'A record of administrative changes and support access.' };
+  const names: Record<Tab, string> = { overview: 'Marketplace overview', listings: 'Manage listings', sellers: 'Your seller community', 'past-questions': 'Past question papers', handouts: 'Student handouts', reports: 'Reports & moderation', settings: 'Site settings', activity: 'Activity log' };
+  const descriptions: Record<Tab, string> = { overview: 'A clear view of your marketplace and what needs your attention.', listings: 'Review every listing and keep the marketplace a good place to trade.', sellers: 'Manage seller access and help your community with confidence.', 'past-questions': 'Publish and manage academic papers for students.', handouts: 'Publish downloadable course handouts for students.', reports: 'Review community concerns and resolve issues with care.', settings: 'Make the marketplace yours. Changes appear on the public website.', activity: 'A record of administrative changes and support access.' };
   const activity = (limit?: number) => (limit ? visibleAudit.slice(0, limit) : visibleAudit).map(entry => <div className={styles.activityRow} key={entry.id}><span className={styles.activityIcon}><ShieldCheck size={16} /></span><div><strong>{actionLabels[entry.action] || entry.action}</strong><p>{String(entry.details.reason || entry.details.id || 'Marketplace configuration')}</p><time dateTime={entry.created_at}>{date(entry.created_at)}</time></div></div>);
   return <div className={styles.shell}>
     <aside className={styles.sidebar}><Link href="/" className={styles.brand}><span>m↗</span><div>MAU Connect<small>ADMIN WORKSPACE</small></div></Link><div className={styles.sideLabel}>MANAGE MARKETPLACE</div>
@@ -155,6 +165,7 @@ export default function AdminDashboard() {
     </aside>
     <div className={styles.workspace}>
       {tab === 'past-questions' && <section className={styles.panel}><div className={styles.panelHeading}><div><h2>Past question papers</h2><p>Publish PDFs for students to find from the Past Q link.</p></div><FileText size={20} /></div><form className={styles.form} onSubmit={savePastQuestion}><label>Paper title<input name="title" required minLength={3} maxLength={160} placeholder="CSC 301 Past Questions" /></label><label>Course<input name="course" required minLength={2} maxLength={120} placeholder="Computer Science" /></label><div className={styles.formGrid}><label>Level<input name="level" required maxLength={40} placeholder="300 level" /></label><label>Year<input name="year" required type="number" min="2000" max="2100" defaultValue={new Date().getFullYear()} /></label></div><label>PDF paper<input name="file" required type="file" accept="application/pdf" /></label><button className={styles.primary} disabled={busy}>{busy ? 'Uploading…' : 'Add past question'}<Check size={17} /></button></form><div className={styles.tableWrap}><table><thead><tr><th>Paper</th><th>Course</th><th>Year</th><th>Open</th></tr></thead><tbody>{data.past_questions.map((paper: PastQuestion) => <tr key={paper.id}><td>{paper.title}</td><td>{paper.course} · {paper.level}</td><td>{paper.year}</td><td><a href={paper.file_url} target="_blank" rel="noreferrer" className={styles.textButton}>View PDF</a></td></tr>)}</tbody></table>{!data.past_questions.length && <Empty title="No past questions yet">Add the first paper above.</Empty>}</div></section>}
+      {tab === 'handouts' && <section className={styles.panel}><div className={styles.panelHeading}><div><h2>Student handouts</h2><p>Publish PDFs for students to download from the Handouts page.</p></div><BookOpen size={20} /></div><form className={styles.form} onSubmit={saveHandout}><label>Handout title<input name="title" required minLength={3} maxLength={160} placeholder="CSC 301 Lecture Notes" /></label><label>Course<input name="course" required minLength={2} maxLength={120} placeholder="Computer Science" /></label><label>Description<textarea name="description" maxLength={500} rows={3} placeholder="A short description for students" /></label><label>PDF handout<input name="file" required type="file" accept="application/pdf" /></label><button className={styles.primary} disabled={busy}>{busy ? 'Uploading…' : 'Add handout'}<Check size={17} /></button></form><div className={styles.tableWrap}><table><thead><tr><th>Handout</th><th>Course</th><th>Open</th></tr></thead><tbody>{data.handouts.map((handout: Handout) => <tr key={handout.id}><td>{handout.title}</td><td>{handout.course}</td><td><a href={handout.file_url} target="_blank" rel="noreferrer" className={styles.textButton}>View PDF</a></td></tr>)}</tbody></table>{!data.handouts.length && <Empty title="No handouts yet">Add the first handout above.</Empty>}</div></section>}
       <div className={styles.topbar}><span>Workspace <ChevronRight size={14} /> <strong>{tabs.find(item => item.id === tab)?.label}</strong></span><div><span className={styles.mode}><i />Live marketplace</span><span className={styles.avatar}>{(data.user.name || 'Admin').slice(0, 1)}</span><span className={styles.account}>{data.user.name || 'Admin'}<small>Administrator</small></span></div></div>
       <div className={styles.content} role="main">
         <div className={styles.heading}><div><span className={styles.eyebrow}>YOUR MARKETPLACE, IN GOOD HANDS</span><h1>{names[tab]}</h1><p>{descriptions[tab]}</p></div><button className={styles.secondary} disabled={busy} onClick={() => run(async () => { await refresh(); setSettingsRevision(value => value + 1); setNotice('Dashboard refreshed.'); })}><RefreshCw size={16} className={busy ? styles.spinning : ''} />Refresh</button></div>

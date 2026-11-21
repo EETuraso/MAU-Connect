@@ -1,0 +1,4 @@
+import Link from 'next/link';
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Reset password | MAU Connect' };
+export default function ResetPasswordPage() { return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24, background: '#f9faf7', color: '#263b31', fontFamily: 'Arial, sans-serif' }}><section style={{ maxWidth: 460, padding: 32, background: '#fff', border: '1px solid #e1e9dd', borderRadius: 12 }}><p style={{ color: '#547b52', fontSize: 11, fontWeight: 700, letterSpacing: 1.5 }}>MAU CONNECT ADMIN</p><h1>Password reset</h1><p style={{ lineHeight: 1.6, color: '#70816d' }}>Password recovery is handled by the account email provider. Request a reset email from your Supabase project, then return here to sign in with the new password.</p><Link href="/admin" style={{ color: '#216547', fontWeight: 700 }}>Back to admin sign in</Link></section></main>; }
