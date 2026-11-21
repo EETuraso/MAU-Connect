@@ -67,7 +67,7 @@ export default function AdminDashboard() {
   const applyMarket = useCallback((market: MarketResponse) => {
     setData({ items: market.listings, past_questions: market.past_questions, handouts: market.handouts, settings: market.settings, users: market.users, audit: market.audit, reports: market.reports, user: market.user });
   }, []);
-  async function refresh() { applyMarket(await fetchMarket()); }
+  async function refresh() { const market = await fetchMarket(); applyMarket(market); return market; }
   useEffect(() => {
     const controller = new AbortController();
     fetchMarket(controller.signal).then(market => {
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
     const timer = setTimeout(() => { setSnapshot(null); setNotice('The support snapshot expired. Open a new one if needed.'); }, Math.max(0, new Date(snapshot.expires_at).getTime() - Date.now()));
     return () => clearTimeout(timer);
   }, [snapshot]);
-  async function run(work: () => Promise<void>) {
+  async function run(work: () => Promise<unknown>) {
     setBusy(true); setError(''); setNotice('');
     try { await work(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to complete the request.'); } finally { setBusy(false); }
   }
@@ -94,7 +94,12 @@ export default function AdminDashboard() {
   }
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); const fields = new FormData(event.currentTarget);
-    await run(async () => { await post({ action: 'signin', email: String(fields.get('email')), password: String(fields.get('password')) }); await refresh(); });
+    await run(async () => {
+      const result = await post<{ message: string }>({ action: 'signin', email: String(fields.get('email')).trim(), password: String(fields.get('password')) });
+      const market = await refresh();
+      if (!market.user) throw new Error(result.message === 'Check your email to confirm your account.' ? result.message : 'Sign-in succeeded, but no active profile was found for this account.');
+      if (market.user.role !== 'admin' || market.user.suspended) throw new Error('This account is not an active administrator. Set its profile role to admin in Supabase, then sign in again.');
+    });
   }
   async function signOut() { await run(async () => { await post({ action: 'signout' }); setData(null); router.push('/'); router.refresh(); }); }
   function remove(item: Listing) { setConfirmation({ title: 'Remove this listing?', description: '“' + item.title + '” will be hidden from the marketplace. The seller will not be able to restore it.', label: 'Remove listing', payload: { action: 'remove', id: item.id } }); }
