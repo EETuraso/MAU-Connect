@@ -22,3 +22,16 @@
   .toast{bottom:calc(75px + env(safe-area-inset-bottom))}
 }
 @media(max-width:360px){.header-inner{padding:0 8px}.brand{font-size:13px}.brand-icon{width:32px;height:32px}.header-actions .signin,header .header-actions .student-link,header .header-actions .sell{font-size:10px;padding:8px 6px}}
+
+.detail-gallery{min-width:0;background:#f2f5ee;align-self:start}
+.detail-gallery .detail-image{position:relative;display:flex;align-items:center;justify-content:center;min-height:0;height:430px;background:#e8ece2;touch-action:pan-y}
+.detail-gallery .detail-image>img{width:100%;height:100%;object-fit:contain}
+.gallery-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:#fffffff2;color:#254e39;box-shadow:0 2px 12px #0002}
+.gallery-previous{left:12px}.gallery-next{right:12px}
+.gallery-count{position:absolute;bottom:12px;right:12px;padding:5px 10px;border-radius:20px;color:white;background:#1d332bd9;font-size:11px}
+.gallery-thumbnails{display:flex;gap:8px;overflow-x:auto;padding:12px}
+.gallery-thumbnail{flex:0 0 64px;width:64px;height:64px;padding:2px;border:2px solid transparent;border-radius:8px;background:white}
+.gallery-thumbnail.selected{border-color:#216547}
+.gallery-thumbnail img{width:100%;height:100%;object-fit:cover;border-radius:4px}
+.detail-gallery-empty{display:grid;place-items:center;min-height:300px;background:#e8ece2;color:#68776d}
+@media(max-width:550px){.detail-gallery .detail-image{height:280px}.gallery-thumbnail{width:56px;height:56px;flex-basis:56px}.gallery-thumbnails{padding:10px}.detail-gallery-empty{min-height:200px}}
