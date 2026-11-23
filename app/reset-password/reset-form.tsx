@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 
@@ -19,10 +19,10 @@ export default function ResetForm() {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify(token ? {accessToken: token, password} : {email})
       });
-      const body = await result.json();
+      const body = await result.json() as { error?: string; message?: string };
       if (!result.ok) throw new Error(body.error || 'Unable to complete the request.');
       if (token) { setToken(''); setPassword(''); setConfirm(''); setMessage('Password updated. You can now sign in.'); }
-      else setMessage(body.message);
+      else setMessage(body.message || 'If an account exists for that email, a password reset link is on its way.');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to complete the request.'); }
     finally { setBusy(false); }
   }
