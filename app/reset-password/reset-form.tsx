@@ -1,4 +1,5 @@
 'use client';
+import PasswordInput from '../password-input';
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 
@@ -34,7 +35,7 @@ export default function ResetForm() {
       <p>{token ? 'Enter and confirm your new password.' : 'Enter your account email and we’ll send a secure password reset link.'}</p>
       {error && <p role="alert" style={{color:'#a53e3e'}}>{error}</p>}{message && <p role="status" style={{color:'#216547'}}>{message}</p>}
       <form onSubmit={submit} style={{display:'grid',gap:12}}>
-        {token ? <><label>New password<input value={password} onChange={e=>setPassword(e.target.value)} type="password" minLength={8} required autoComplete="new-password" style={input}/></label><label>Confirm password<input value={confirm} onChange={e=>setConfirm(e.target.value)} type="password" minLength={8} required autoComplete="new-password" style={input}/></label></> : <label>Email address<input value={email} onChange={e=>setEmail(e.target.value)} type="email" required autoComplete="email" style={input}/></label>}
+        {token ? <><label>New password<PasswordInput value={password} onChange={e=>setPassword(e.target.value)} type="password" minLength={8} required autoComplete="new-password" style={input}/></label><label>Confirm password<PasswordInput value={confirm} onChange={e=>setConfirm(e.target.value)} type="password" minLength={8} required autoComplete="new-password" style={input}/></label></> : <label>Email address<input value={email} onChange={e=>setEmail(e.target.value)} type="email" required autoComplete="email" style={input}/></label>}
         <button disabled={busy} style={{padding:12,border:0,borderRadius:7,background:'#216547',color:'#fff',fontWeight:700}}>{busy ? 'Please wait…' : token ? 'Update password' : 'Send reset email'}</button>
       </form><p><Link href="/admin" style={{color:'#216547',fontWeight:700}}>Back to admin sign in</Link></p>
     </section>

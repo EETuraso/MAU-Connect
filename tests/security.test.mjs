@@ -87,6 +87,25 @@ test('admin overview loads reports, sellers and audit using the verified session
 
 const isAdminQuery=call=>call.url.includes('/profiles?select=')||call.url.includes('/audit_log?')||call.url.includes('/reports?');
 
+test('only an active admin receives the exact profile count',async()=>{
+  configure(); role='admin';
+  const mockFetch=globalThis.fetch;
+  globalThis.fetch=async(url,init)=>{
+    if(init.method==='HEAD'&&url.includes('/profiles?')){
+      calls.push({url,init});
+      return new Response(null,{status:200,headers:{'content-range':'0-0/1234'}});
+    }
+    return mockFetch(url,init);
+  };
+  const body=await (await GET()).json();
+  assert.equal(body.registered_count,1234);
+  assert.equal(calls.find(call=>call.init.method==='HEAD').init.headers.Authorization,'Bearer test-token');
+  configure();
+  const sellerBody=await (await GET()).json();
+  assert.equal(sellerBody.registered_count,null);
+  assert.equal(calls.some(call=>call.init.method==='HEAD'),false);
+});
+
 test('seller and suspended admin overviews never request privileged collections',async()=>{
   for(const account of [{role:'seller',suspended:false},{role:'admin',suspended:true}]){
     configure();

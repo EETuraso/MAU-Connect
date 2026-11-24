@@ -47,3 +47,18 @@ header .brand-icon{width:50px;height:50px;font-size:32px}
   header .brand{font-size:clamp(16px,5vw,18px);gap:6px}
   header .brand-icon{width:39px;height:39px;font-size:26px}
 }
+
+.password-input{display:flex;align-items:center;position:relative;width:100%}
+.password-input input{width:100%;padding-right:62px!important}
+.password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);padding:6px 8px;border:0;border-radius:5px;background:#edf5ed;color:#216547;font-size:11px;font-weight:700;cursor:pointer}
+.message-seller{margin-top:14px;color:#216547;border-color:#91b499;font-weight:700}
+.market-messages h2{margin:0;font-size:24px}.market-messages>p{font-size:12px}
+.message-error{color:#a53e3e!important}.message-layout{display:grid;grid-template-columns:160px minmax(0,1fr);gap:14px}
+.message-threads{max-height:380px;overflow:auto;border-right:1px solid #dfe9dc;padding-right:10px}
+.message-thread{width:100%;text-align:left;padding:10px;border-radius:7px;font-weight:700;font-size:12px;overflow-wrap:anywhere}
+.message-thread.active{background:#e4f0e3;color:#216547}.message-thread small{font-weight:400;margin-top:4px;font-size:10px}
+.message-conversation{min-width:0}.message-list{height:260px;overflow:auto;background:#edf4eb;border-radius:8px;padding:12px}
+.message-bubble{background:#fff;border-radius:10px;padding:8px 10px;margin:0 25px 8px 0;overflow-wrap:anywhere}
+.message-bubble.mine{background:#d6e9d3;margin:0 0 8px 25px}.message-bubble p{margin:0;color:#263b31;font-size:12px;white-space:pre-wrap}.message-bubble small{font-size:9px;margin-top:4px}
+.message-compose{display:flex;gap:8px;margin-top:10px}.message-compose input{min-width:0;flex:1;border:1px solid #dce5d8;border-radius:7px;padding:10px}
+@media(max-width:550px){.message-layout{grid-template-columns:1fr}.message-threads{display:flex;gap:5px;max-height:95px;border:0;border-bottom:1px solid #dfe9dc;padding:0 0 8px}.message-thread{min-width:130px}.message-list{height:220px}}

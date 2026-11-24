@@ -62,6 +62,7 @@ export type Handout = {
   created_at: string;
 };
 export type MarketResponse = {
+  registered_count?: number | null;
   listings: Listing[];
   past_questions: PastQuestion[];
   handouts: Handout[];
