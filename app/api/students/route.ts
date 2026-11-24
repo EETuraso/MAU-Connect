@@ -1,10 +1,49 @@
-// @ts-nocheck
-import { cookies } from 'next/headers';
+import { sameOrigin, session, supabase, supabaseKey, supabaseUrl } from '../../../lib/server-session';
 
-const url=()=>process.env.SUPABASE_URL;
-const key=()=>process.env.SUPABASE_ANON_KEY;
-async function sb(path:string,token?:string,init:RequestInit={}){const r=await fetch(`${url()}${path}`,{...init,headers:{apikey:key()!,Authorization:`Bearer ${token||key()}`,'Content-Type':'application/json',...init.headers},cache:'no-store'});const text=await r.text();const data=text?JSON.parse(text):null;if(!r.ok)throw new Error(data?.message||data?.msg||data?.error_description||'Request failed');return data;}
-async function identity(){const jar=await cookies();const token=jar.get('mau_access')?.value;const refresh=jar.get('mau_refresh')?.value;if(token){try{return {token,user:await sb('/auth/v1/user',token)}}catch{}}if(refresh){try{const session=await sb('/auth/v1/token?grant_type=refresh_token',undefined,{method:'POST',body:JSON.stringify({refresh_token:refresh})});if(session?.access_token)return {token:session.access_token,user:session.user};}catch{}}return {token:undefined,user:null};}
-function requireConfig(){if(!url()||!key())throw new Error('Connect Supabase to use Student Block accounts and chat.');}
-export async function GET(){try{requireConfig();const {token,user}=await identity();const [past_questions,handouts]=user?await Promise.all([sb('/rest/v1/past_questions?select=id,title,course,level,year,file_url,created_at&order=year.desc,created_at.desc',token).catch(()=>[]),sb('/rest/v1/handouts?select=id,title,course,description,file_url,created_at&order=created_at.desc',token).catch(()=>[])]):[[],[]];const messages=user?await sb('/rest/v1/student_messages?select=id,body,created_at,user:profiles!student_messages_user_id_fkey(username,avatar_url)&order=created_at.asc&limit=100',token).catch(()=>[]):[];let profile=null;if(user)profile=(await sb(`/rest/v1/profiles?id=eq.${user.id}&select=id,name,username,avatar_url`,token).catch(()=>[]))[0]||null;return Response.json({past_questions,handouts,messages,user:profile});}catch(e){return Response.json({error:(e as Error).message},{status:503});}}
-export async function POST(req:Request){try{requireConfig();const {token,user}=await identity();if(!user||!token)return Response.json({error:'Sign in to join Student Block.'},{status:401});const body=await req.json();if(!body||typeof body.action!=='string')throw new Error('Invalid request');if(body.action==='profile'){const username=String(body.username||'').trim().replace(/\s+/g,' ');const avatar_url=String(body.avatar_url||'');if(username.length<3||username.length>30)throw new Error('Username must be 3–30 characters.');if(!/^[\p{L}\p{N} _.-]+$/u.test(username))throw new Error('Use letters, numbers, spaces, dots, dashes or underscores.');await sb(`/rest/v1/profiles?id=eq.${user.id}`,token,{method:'PATCH',body:JSON.stringify({username,avatar_url})});return Response.json({ok:true});}if(body.action==='message'){const message=String(body.body||'').trim();if(message.length<1||message.length>1000)throw new Error('Message must be 1–1000 characters.');const result=await sb('/rest/v1/student_messages',token,{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({user_id:user.id,body:message})});return Response.json(result[0]||{ok:true});}throw new Error('Unknown action');}catch(e){return Response.json({error:(e as Error).message},{status:400});}}
+export async function GET(request: Request) {
+  if (!supabaseUrl() || !supabaseKey()) return Response.json({ error: 'Student Block is not configured.' }, { status: 503 });
+  try {
+    const { user, token } = await session();
+    const chatOnly = new URL(request.url).searchParams.get('chat') === '1';
+    if (!user || !token) {
+      if (chatOnly) return Response.json({ error: 'Sign in to join Student Block.' }, { status: 401 });
+      return Response.json({ user: null, messages: [] });
+    }
+    const messages = await supabase('/rest/v1/rpc/student_room_messages', token, { method: 'POST', body: '{}' });
+    if (chatOnly) return Response.json({ messages });
+    const profiles = await supabase(`/rest/v1/profiles?id=eq.${user.id}&select=id,name,username,avatar_url`, token);
+    if (!profiles[0]) return Response.json({ error: 'Your student profile is unavailable. Please contact support.' }, { status: 403 });
+    return Response.json({ user: profiles[0], messages });
+  } catch {
+    return Response.json({ error: 'Student Block could not load. Please try again.' }, { status: 503 });
+  }
+}
+
+export async function POST(request: Request) {
+  if (!supabaseUrl() || !supabaseKey()) return Response.json({ error: 'Student Block is not configured.' }, { status: 503 });
+  if (!sameOrigin(request)) return Response.json({ error: 'Invalid origin.' }, { status: 403 });
+  try {
+    const { user, token } = await session();
+    if (!user || !token) return Response.json({ error: 'Sign in to join Student Block.' }, { status: 401 });
+    const body: unknown = await request.json();
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return Response.json({ error: 'Invalid request.' }, { status: 400 });
+    const input = body as Record<string, unknown>;
+    if (input.action === 'profile') {
+      const username = String(input.username || '').trim().replace(/\s+/g, ' ');
+      const avatar = String(input.avatar_url || '');
+      if (username.length < 3 || username.length > 30 || !/^[\p{L}\p{N} _.-]+$/u.test(username)) return Response.json({ error: 'Choose a username of 3 to 30 letters, numbers, spaces, dots, dashes or underscores.' }, { status: 400 });
+      if (avatar && !avatar.startsWith(`${supabaseUrl()}/storage/v1/object/public/student-avatars/${user.id}/`)) return Response.json({ error: 'Please upload your own profile picture.' }, { status: 400 });
+      await supabase(`/rest/v1/profiles?id=eq.${user.id}`, token, { method: 'PATCH', body: JSON.stringify({ username, avatar_url: avatar }) });
+      return Response.json({ ok: true });
+    }
+    if (input.action === 'message') {
+      const message = typeof input.body === 'string' ? input.body.trim() : '';
+      if (!message || message.length > 1000) return Response.json({ error: 'Messages must be between 1 and 1,000 characters.' }, { status: 400 });
+      await supabase('/rest/v1/student_messages', token, { method: 'POST', body: JSON.stringify({ user_id: user.id, body: message }) });
+      return Response.json({ ok: true });
+    }
+    return Response.json({ error: 'Unknown action.' }, { status: 400 });
+  } catch (error) {
+    return Response.json({ error: error instanceof Error ? error.message : 'Unable to complete the request.' }, { status: 400 });
+  }
+}

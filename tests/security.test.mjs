@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import ts from 'typescript';
-const source=fs.readFileSync(new URL('../app/api/market/route.ts',import.meta.url),'utf8').replace("import { cookies } from 'next/headers';",'const cookies=async()=>globalThis.__jar;').replace("import { defaults } from '../../data';",'const defaults={};');
+const sessionSource=fs.readFileSync(new URL('../lib/server-session.ts',import.meta.url),'utf8');
+const originSource=sessionSource.slice(sessionSource.indexOf('export function sameOrigin'));
+const source=fs.readFileSync(new URL('../app/api/market/route.ts',import.meta.url),'utf8').replace("import { cookies } from 'next/headers';",'const cookies=async()=>globalThis.__jar;').replace("import { defaults } from '../../data';",'const defaults={};').replace("import { sameOrigin } from '../../../lib/server-session';",originSource);
 const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
 const {POST,GET}=await import('data:text/javascript;base64,'+Buffer.from(compiled).toString('base64'));
 const originalFetch=globalThis.fetch;
@@ -12,7 +14,7 @@ let suspended=false;
 let userId='seller-1';
 globalThis.__jar={get:key=>key==='mau_access'?{value:'test-token'}:undefined,set(){},delete(){}};
 function configure(){process.env.SUPABASE_URL='https://test.supabase.co';process.env.SUPABASE_ANON_KEY='test-key';calls.length=0;role='seller';suspended=false;userId='seller-1';globalThis.__jar={get:key=>key==='mau_access'?{value:'test-token'}:undefined,set(){},delete(){}};globalThis.fetch=async(url,init)=>{calls.push({url,init});if(url.endsWith('/auth/v1/user'))return Response.json({id:userId});if(url.includes('/profiles?'))return Response.json([{id:userId,role,suspended}]);if(!init.method||init.method==='GET')return Response.json([]);return new Response(null,{status:204});};}
-const request=(body,origin='https://market.test')=>new Request('https://market.test/api/market',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)});
+const request=(body,origin='https://market.test')=>new Request('https://market.test/api/market',{method:'POST',headers:{origin,host:'market.test','content-type':'application/json'},body:JSON.stringify(body)});
 test('unconfigured preview cannot accept live account mutations',async()=>{delete process.env.SUPABASE_URL;delete process.env.SUPABASE_ANON_KEY;assert.equal((await POST(request({action:'signup'}))).status,503);assert.equal((await (await GET()).json()).demo,true)});
 test('cross-origin mutations fail before authentication',async()=>{configure();assert.equal((await POST(request({action:'settings'},'https://evil.test'))).status,403);assert.equal(calls.length,0)});
 test('seller cannot call any admin operation',async()=>{configure();for(const action of ['remove','settings','suspend','impersonate','reports','resolve'])assert.equal((await POST(request({action}))).status,403);assert.equal(calls.some(x=>x.url.includes('admin_action')),false)});
@@ -200,7 +202,7 @@ test('uploads over 4MB are rejected before a storage mutation',async()=>{
   configure();
   const form=new FormData();
   form.append('file',new File([new Uint8Array(4*1024*1024+1)],'large.png',{type:'image/png'}));
-  const response=await POST(new Request('https://market.test/api/market',{method:'POST',headers:{origin:'https://market.test'},body:form}));
+  const response=await POST(new Request('https://market.test/api/market',{method:'POST',headers:{origin:'https://market.test',host:'market.test'},body:form}));
   assert.equal(response.status,400);
   assert.match((await response.json()).error,/4MB/);
   assert.equal(calls.some(call=>call.url.includes('/storage/v1/object/')),false);
