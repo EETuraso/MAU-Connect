@@ -35,3 +35,15 @@
 .gallery-thumbnail img{width:100%;height:100%;object-fit:cover;border-radius:4px}
 .detail-gallery-empty{display:grid;place-items:center;min-height:300px;background:#e8ece2;color:#68776d}
 @media(max-width:550px){.detail-gallery .detail-image{height:280px}.gallery-thumbnail{width:56px;height:56px;flex-basis:56px}.gallery-thumbnails{padding:10px}.detail-gallery-empty{min-height:200px}}
+
+/* Give the marketplace brand more prominence while keeping the actions visible. */
+header .brand{font-size:27px}
+header .brand-icon{width:50px;height:50px;font-size:32px}
+@media(max-width:800px){
+  header .brand{font-size:clamp(17px,5.3vw,24px);gap:8px}
+  header .brand-icon{width:44px;height:44px;font-size:29px}
+}
+@media(max-width:360px){
+  header .brand{font-size:clamp(16px,5vw,18px);gap:6px}
+  header .brand-icon{width:39px;height:39px;font-size:26px}
+}
