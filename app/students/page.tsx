@@ -14,6 +14,10 @@ async function read<T>(response: Response): Promise<T> {
   return result as T;
 }
 const post = (url: string, body: object) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+function Avatar({ url, name }: { url?: string; name: string }) {
+  const [failedUrl, setFailedUrl] = useState('');
+  return <span className={styles.avatar} aria-label={`${name}'s profile picture`}>{url && failedUrl !== url ? <img src={url} alt="" onError={() => setFailedUrl(url)}/> : name.slice(0, 1).toUpperCase()}</span>;
+}
 
 export default function Students() {
   const [data, setData] = useState<Data | null>(null);
@@ -72,7 +76,7 @@ export default function Students() {
   async function chooseAvatar(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]; if (!file) return;
     setBusy(true);
-    try { const form = new FormData(); form.append('file', file); const result = await read<{ url: string }>(await fetch('/api/students/avatar', { method: 'POST', body: form })); setAvatar(result.url); setNotice('Picture uploaded. Save your profile to finish.'); }
+    try { const form = new FormData(); form.append('file', file); const result = await read<{ url: string }>(await fetch('/api/students/avatar', { method: 'POST', body: form })); setAvatar(result.url); setData(previous => previous?.user ? { ...previous, user: { ...previous.user, avatar_url: result.url }, messages: previous.messages.map(message => message.user_id === previous.user?.id ? { ...message, user: { ...message.user, avatar_url: result.url } } : message) } : previous); setNotice('Profile picture updated.'); }
     catch (error) { setNotice((error as Error).message); } finally { setBusy(false); }
   }
   return <main className={styles.page}>
@@ -88,9 +92,9 @@ export default function Students() {
         {authMode === 'signin' && <p className={styles.muted}><Link href="/reset-password">Forgot your password?</Link></p>}</section> : <>
       <nav className={styles.tabs} aria-label="Student Block"><span className={styles.active}><MessageCircle size={17}/> Student chat</span><Link href="/students/past-q">Past Q</Link><Link href="/students/handouts">Handouts</Link></nav>
       <section className={styles.chat} aria-label="Student group chat"><div className={styles.chatHeading}><strong>Student group chat</strong><small>Messages are visible to signed-in members</small></div>
-        <div className={styles.messages}>{data.messages.length ? data.messages.map(message => <article className={`${styles.message} ${message.user_id === data.user?.id ? styles.mine : ''}`} key={message.id}><div><strong>{message.user_id === data.user?.id ? 'You' : message.user?.username || 'Student'}</strong><p>{message.body}</p><small>{new Date(message.created_at).toLocaleString()}</small></div></article>) : <div className={styles.empty}><p>Start the conversation with your classmates.</p></div>}<div ref={bottom}/></div>
+        <div className={styles.messages}>{data.messages.length ? data.messages.map(message => <article className={`${styles.message} ${message.user_id === data.user?.id ? styles.mine : ''}`} key={message.id}><Avatar url={message.user?.avatar_url} name={message.user?.username || 'Student'}/><div><strong>{message.user_id === data.user?.id ? 'You' : message.user?.username || 'Student'}</strong><p>{message.body}</p><small>{new Date(message.created_at).toLocaleString()}</small></div></article>) : <div className={styles.empty}><p>Start the conversation with your classmates.</p></div>}<div ref={bottom}/></div>
         <form className={styles.composer} onSubmit={send}><input value={body} onChange={event => setBody(event.target.value)} maxLength={1000} aria-label="Message" placeholder="Type a message…"/><button className={styles.primary} disabled={busy || !body.trim()}><Send size={17}/> Send</button></form></section>
       <div className={styles.accountActions}><Link href="/?dashboard=1">Open my dashboard</Link><button disabled={busy} onClick={async () => { setBusy(true); try { await read(await post('/api/market', { action: 'signout' })); await refresh(); setNotice('Signed out.'); } catch (error) { setNotice((error as Error).message); } finally { setBusy(false); } }}>Sign out</button></div>
-      <form className={styles.profile} onSubmit={saveProfile}><div><span className={styles.avatar}>{(username || 'S').slice(0, 1).toUpperCase()}</span><div><strong>Your student profile</strong><small>Choose how classmates see you.</small></div></div><input aria-label="Student username" value={username} onChange={event => setUsername(event.target.value)} minLength={3} maxLength={30} required/><label className={styles.upload}><ImagePlus size={16}/> Upload picture<input type="file" accept="image/png,image/jpeg,image/webp" onChange={chooseAvatar}/></label><button className={styles.secondary} disabled={busy}>Save profile</button></form>
+      <form className={styles.profile} onSubmit={saveProfile}><div><Avatar url={avatar} name={username || 'Student'}/><div><strong>Your student profile</strong><small>Choose how classmates see you.</small></div></div><input aria-label="Student username" value={username} onChange={event => setUsername(event.target.value)} minLength={3} maxLength={30} required/><label className={styles.upload}><ImagePlus size={16}/> Upload picture<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={chooseAvatar}/></label><button className={styles.secondary} disabled={busy}>Save profile</button></form>
     </>}</main>;
 }
