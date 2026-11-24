@@ -5,9 +5,17 @@ export async function GET(request: Request) {
   try {
     const { user, token } = await session();
     const chatOnly = new URL(request.url).searchParams.get('chat') === '1';
+    const resourcesOnly = new URL(request.url).searchParams.get('resources') === '1';
     if (!user || !token) {
       if (chatOnly) return Response.json({ error: 'Sign in to join Student Block.' }, { status: 401 });
       return Response.json({ user: null, messages: [] });
+    }
+    if (resourcesOnly) {
+      const [past_questions, handouts] = await Promise.all([
+        supabase('/rest/v1/past_questions?select=id,title,course,level,year,created_at&order=year.desc,created_at.desc', token),
+        supabase('/rest/v1/handouts?select=id,title,course,description,created_at&order=created_at.desc', token),
+      ]);
+      return Response.json({ user: { id: user.id }, past_questions, handouts }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
     const messages = await supabase('/rest/v1/rpc/student_room_messages', token, { method: 'POST', body: '{}' });
     if (chatOnly) return Response.json({ messages });

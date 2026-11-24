@@ -8,7 +8,7 @@ let user = null; const calls = [];
 globalThis.__studentDeps = {
   sameOrigin: request => request.headers.get('origin') === new URL(request.url).origin,
   session: async () => user ? { user, token: 'verified' } : { user: null },
-  supabase: async (...args) => { calls.push(args); return args[0].includes('/profiles?') ? [user] : []; },
+  supabase: async (...args) => { calls.push(args); if(args[0].includes('/profiles?')) return [user]; if(args[0].includes('/past_questions?')) return [{id:'paper',title:'Past paper'}]; if(args[0].includes('/handouts?')) return [{id:'handout',title:'Handout'}]; return []; },
   supabaseKey: () => 'key', supabaseUrl: () => 'https://example.test',
 };
 const { GET, POST } = await import('data:text/javascript;base64,' + Buffer.from(code).toString('base64'));
@@ -19,6 +19,19 @@ test('student room requires authentication and rejects cross-origin messages', a
   assert.equal((await POST(request({ action: 'message', body: 'hello' }))).status, 401);
   assert.equal((await POST(request({ action: 'message', body: 'hello' }, 'https://evil.test'))).status, 403);
   assert.equal(calls.length, 0);
+});
+test('resource lists require sign-in and do not depend on the chat service', async () => {
+  user = null; calls.length = 0;
+  const anonymous = await (await GET(new Request('https://site.test/api/students?resources=1'))).json();
+  assert.equal(anonymous.user, null);
+  assert.equal(calls.length, 0);
+  user = { id: 'student-1' };
+  const response = await GET(new Request('https://site.test/api/students?resources=1'));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.past_questions[0].id, 'paper');
+  assert.equal(body.handouts[0].id, 'handout');
+  assert.equal(calls.some(call => call[0].includes('student_room_messages')), false);
 });
 test('student messages use the verified sender and reject empty messages', async () => {
   user = { id: 'student-1' }; calls.length = 0;
