@@ -10,6 +10,10 @@ export async function GET(request: Request) {
       if (chatOnly) return Response.json({ error: 'Sign in to join Student Block.' }, { status: 401 });
       return Response.json({ user: null, messages: [] });
     }
+    if (new URL(request.url).searchParams.get('members') === '1') {
+      const members = await supabase('/rest/v1/rpc/student_group_info', token, { method: 'POST', body: '{}' });
+      return Response.json({ members }, { headers: { 'Cache-Control': 'private, no-store' } });
+    }
     if (resourcesOnly) {
       const [past_questions, handouts] = await Promise.all([
         supabase('/rest/v1/past_questions?select=id,title,course,level,year,created_at&order=year.desc,created_at.desc', token),
@@ -17,9 +21,12 @@ export async function GET(request: Request) {
       ]);
       return Response.json({ user: { id: user.id }, past_questions, handouts }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
-    const messages = await supabase('/rest/v1/rpc/student_room_messages', token, { method: 'POST', body: '{}' });
+    const [messages, , profiles] = await Promise.all([
+      supabase('/rest/v1/rpc/student_room_messages', token, { method: 'POST', body: '{}' }),
+      chatOnly ? Promise.resolve(null) : supabase('/rest/v1/rpc/student_group_info', token, { method: 'POST', body: '{}' }),
+      chatOnly ? Promise.resolve(null) : supabase(`/rest/v1/profiles?id=eq.${user.id}&select=id,name,username,avatar_url`, token),
+    ]);
     if (chatOnly) return Response.json({ messages });
-    const profiles = await supabase(`/rest/v1/profiles?id=eq.${user.id}&select=id,name,username,avatar_url`, token);
     if (!profiles[0]) return Response.json({ error: 'Your student profile is unavailable. Please contact support.' }, { status: 403 });
     return Response.json({ user: profiles[0], messages });
   } catch {
@@ -36,10 +43,20 @@ export async function POST(request: Request) {
     const body: unknown = await request.json();
     if (!body || typeof body !== 'object' || Array.isArray(body)) return Response.json({ error: 'Invalid request.' }, { status: 400 });
     const input = body as Record<string, unknown>;
+    if (input.action === 'delete_message') {
+      const id = typeof input.id === 'string' ? input.id : '';
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return Response.json({ error: 'Invalid message.' }, { status: 400 });
+      const rows = await supabase(`/rest/v1/student_messages?id=eq.${id}&user_id=eq.${user.id}&select=id,body`, token);
+      if (!rows.length) return Response.json({ error: 'Message not found.' }, { status: 404 });
+      await supabase(`/rest/v1/student_messages?id=eq.${id}&user_id=eq.${user.id}`, token, { method: 'DELETE' });
+      const match = typeof rows[0].body === 'string' ? /^\[(voice|image)\]([0-9a-f-]{36}\/[0-9a-f-]{36}\.(?:webm|ogg|mp4|jpg|png|webp))$/i.exec(rows[0].body) : null;
+      if (match && match[2].startsWith(`${user.id}/`)) await supabase(`/storage/v1/object/${match[1] === 'voice' ? 'student-voice' : 'student-chat-images'}/${match[2]}`, token, { method: 'DELETE' }).catch(() => {});
+      return Response.json({ ok: true });
+    }
     if (input.action === 'profile') {
       const username = String(input.username || '').trim().replace(/\s+/g, ' ');
       const avatar = String(input.avatar_url || '');
-      if (username.length < 3 || username.length > 30 || !/^[\p{L}\p{N} _.-]+$/u.test(username)) return Response.json({ error: 'Choose a username of 3 to 30 letters, numbers, spaces, dots, dashes or underscores.' }, { status: 400 });
+      if (username && (username.length < 3 || username.length > 30 || !/^[\p{L}\p{N} _.-]+$/u.test(username))) return Response.json({ error: 'Choose a username of 3 to 30 letters, numbers, spaces, dots, dashes or underscores.' }, { status: 400 });
       if (avatar && !avatar.startsWith(`${supabaseUrl()}/storage/v1/object/public/student-avatars/${user.id}/`)) return Response.json({ error: 'Please upload your own profile picture.' }, { status: 400 });
       await supabase(`/rest/v1/profiles?id=eq.${user.id}`, token, { method: 'PATCH', body: JSON.stringify({ username, avatar_url: avatar }) });
       return Response.json({ ok: true });
