@@ -10,7 +10,7 @@ globalThis.__imageDeps = {
   sameOrigin: () => origin, session: async () => ({ user, token: user ? 'token' : null }), supabaseKey: () => 'key', supabaseUrl: () => 'https://example.test',
   supabase: async (path, token, init) => { calls.push({path, init}); if (path.includes('student_room_messages')) return messages; if (path.includes('/sign/')) return {signedURL:'/object/sign/test?token=x'}; return {}; },
 };
-const { POST, GET } = await import(`data:text/javascript,${encodeURIComponent(stripTypeScriptTypes(source))}`);
+const { POST, GET, PUT } = await import(`data:text/javascript,${encodeURIComponent(stripTypeScriptTypes(source))}`);
 function upload(type = 'image/jpeg') { const form = new FormData(); form.append('file', new Blob(['image'], {type}), 'photo'); return new Request('https://example.test/api/students/image', {method:'POST', body:form}); }
 test('image uploads require a session and valid image type', async () => {
   calls=[]; user=null; assert.equal((await POST(upload())).status,401);
@@ -22,4 +22,13 @@ test('photo playback cannot sign a path belonging to a different sender', async 
   calls=[]; messages=[{id,user_id:'33333333-3333-4333-8333-333333333333',body:`[image]${id}/22222222-2222-4222-8222-222222222222.jpg`}];
   assert.equal((await GET(new Request(`https://example.test/api/students/image?id=${id}`))).status,404);
   assert.equal(calls.some(call=>call.path.includes('/sign/')),false);
+});
+test('view-once upload uses the private database function and opening requires a session', async () => {
+  calls=[]; user={id};
+  const form = new FormData(); form.append('file', new Blob(['image'], {type:'image/jpeg'}), 'photo.jpg'); form.append('view_once','true');
+  assert.equal((await POST(new Request('https://example.test/api/students/image', {method:'POST',body:form}))).status,200);
+  assert.equal(calls[0].path,'/rest/v1/rpc/send_student_view_once');
+  assert.equal(calls.some(call => call.path.includes('/storage/')),false);
+  user=null;
+  assert.equal((await PUT(new Request(`https://example.test/api/students/image?id=${id}`, {method:'PUT'}))).status,401);
 });
