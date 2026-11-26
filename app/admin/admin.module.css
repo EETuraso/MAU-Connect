@@ -73,3 +73,33 @@
 .metricsGrid strong,.metricsGrid span{display:block}.metricsGrid strong{font-size:24px;color:#216547}.metricsGrid span{font-size:11px;color:#687b6b;margin-top:5px}
 .metricsDays{max-height:220px;overflow:auto}.metricsDays>div{display:flex;justify-content:space-between;border-bottom:1px solid #e5ece3;padding:8px 2px;font-size:12px}
 @media(max-width:600px){.metricsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+:global(html.dark) .shell{background:#101814;color:#e8f1ea}
+:global(html.dark) .sidebar,:global(html.dark) .topbar{background:#18251d;border-color:#2d4436}
+:global(html.dark) .brand,:global(html.dark) .account,:global(html.dark) .heading h1,:global(html.dark) .panelHeading h2,:global(html.dark) .stat>strong,:global(html.dark) .itemCell strong,:global(html.dark) .sellerInfo>strong,:global(html.dark) .reportRow strong{color:#e8f1ea}
+:global(html.dark) .brand small,:global(html.dark) .sideLabel,:global(html.dark) .navigation button,:global(html.dark) .sideBottom>a,:global(html.dark) .sideBottom>button,:global(html.dark) .topbar>span,:global(html.dark) .topbar>span strong,:global(html.dark) .heading p,:global(html.dark) .panelHeading p,:global(html.dark) .stat>small,:global(html.dark) .recentItem small,:global(html.dark) .activityRow p,:global(html.dark) .activityRow time,:global(html.dark) .sellerInfo>small,:global(html.dark) .reportRow p,:global(html.dark) .reportRow small,:global(html.dark) .form label,:global(html.dark) .form small{color:#a6b4aa}
+:global(html.dark) .navigation button:hover,:global(html.dark) .navigation .selected{background:#254b34;color:#dcf1df}
+:global(html.dark) .count{background:#2d5037;color:#c8e5cc}
+:global(html.dark) .help,:global(html.dark) .demoBanner,:global(html.dark) .stat,:global(html.dark) .panel,:global(html.dark) .search,:global(html.dark) .toolbar select,:global(html.dark) .dialog{background:#18251d;border-color:#2d4436;color:#e8f1ea}
+:global(html.dark) .help p,:global(html.dark) .demoBanner,:global(html.dark) .demoBanner strong{color:#a6b4aa}
+:global(html.dark) .mode{border-color:#385940;color:#9bd1a7}
+:global(html.dark) .avatar,:global(html.dark) .sellerAvatar{background:#2d5037;border-color:#456150;color:#b8e6c2}
+:global(html.dark) .primary{background:#3e8a5b;color:#fff}
+:global(html.dark) .secondary{background:#223529;border-color:#456150;color:#c3d6c6}
+:global(html.dark) .secondary:hover,:global(html.dark) .rowActions button:hover{background:#2b4833}
+:global(html.dark) .dangerButton{background:#a95d4d}
+:global(html.dark) .stat>div,:global(html.dark) .panelHeading>svg,:global(html.dark) .panelHeading>button,:global(html.dark) .empty,:global(html.dark) .activityIcon,:global(html.dark) .reportIcon{color:#9cc49f}
+:global(html.dark) .panelHeading h2>span,:global(html.dark) .track,:global(html.dark) .formNote,:global(html.dark) .gateIcon{background:#223829;color:#b9d8bd}
+:global(html.dark) .track>span{background:#6eac7b}
+:global(html.dark) .valueSummary,:global(html.dark) .panelLink,:global(html.dark) .recentItem,:global(html.dark) .activityRow,:global(html.dark) .sellerRow,:global(html.dark) .reportRow,:global(html.dark) .tableWrap td,:global(html.dark) .footer{border-color:#2d4436}
+:global(html.dark) .valueSummary>span,:global(html.dark) .valueSummary>small,:global(html.dark) .details dt,:global(html.dark) .details dd,:global(html.dark) .footer,:global(html.dark) .footer a{color:#a6b4aa}
+:global(html.dark) .recentItem>b,:global(html.dark) .price,:global(html.dark) .panelLink,:global(html.dark) .reportActions button,:global(html.dark) .detailPrice{color:#8bd5a3!important}
+:global(html.dark) .activityIcon,:global(html.dark) .reportIcon{background:#223829;border-color:#385940}
+:global(html.dark) .search input,:global(html.dark) .toolbar select,:global(html.dark) .form input,:global(html.dark) .form textarea,:global(html.dark) .form select{background:#111b15;color:#e8f1ea;border-color:#2d4436}
+:global(html.dark) .tableWrap th{background:#223128;color:#b5c6b9}
+:global(html.dark) .itemCell small{color:#a6b4aa}
+:global(html.dark) .positive{background:#254b34;color:#b9e2bd}
+:global(html.dark) .negative{background:#4b2d28;color:#e8b5a9}
+:global(html.dark) .neutral{background:#283646;color:#bdd1ea}
+:global(html.dark) .error{background:#4b2d28;border-color:#8a4f44;color:#f0c1b8}
+:global(html.dark) .notice{background:#254b34;border-color:#456150;color:#c7e6cb}
+:global(html.dark) .dialog::backdrop{background:#06100bd9}

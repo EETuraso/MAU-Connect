@@ -1,0 +1,326 @@
+/* Global light/dark theme tokens and shared marketplace surfaces. */
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+  --green: #6fbd8d;
+  --deep: #0b2418;
+  --mint: #182d21;
+  --ink: #e8f1ea;
+  --muted: #a6b4aa;
+  --line: #2d4436;
+  --cream: #101814;
+}
+
+html.dark body {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.theme-toggle {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #cbd8ca;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #315f46;
+  box-shadow: 0 8px 22px #18352222;
+  transition: transform .2s, background .2s, color .2s, border-color .2s;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-2px);
+}
+
+.theme-toggle .theme-icon-sun {
+  display: none;
+}
+
+html.dark .theme-toggle .theme-icon-sun {
+  display: block;
+}
+
+html.dark .theme-toggle .theme-icon-moon {
+  display: none;
+}
+
+.theme-toggle:focus-visible {
+  outline: 3px solid #84b793;
+  outline-offset: 3px;
+}
+
+html.dark .theme-toggle {
+  border-color: #456150;
+  background: #1d3025;
+  color: #f4d98c;
+  box-shadow: 0 8px 22px #0006;
+}
+
+html.dark header,
+html.dark .searchbar,
+html.dark .category > span,
+html.dark .product-card,
+html.dark .outline,
+html.dark .listing-tools select,
+html.dark .contact-card,
+html.dark .panel,
+html.dark .stats > div,
+html.dark .modal,
+html.dark .profile,
+html.dark .message-threads,
+html.dark .message-conversation,
+html.dark .message-list,
+html.dark .message-bubble,
+html.dark .message-compose input {
+  background: #18251d;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+html.dark .topline {
+  background: #091d13;
+  color: #c6dccb;
+}
+
+html.dark header {
+  border-bottom-color: var(--line);
+}
+
+html.dark .brand,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark .product-title,
+html.dark .section-heading h2,
+html.dark .listings-heading h2,
+html.dark .dashboard h1,
+html.dark .panel h2,
+html.dark .modal h2,
+html.dark .auth-content h2,
+html.dark .detail-copy h2 {
+  color: var(--ink);
+}
+
+html.dark p,
+html.dark small,
+html.dark .product-category,
+html.dark .product-meta,
+html.dark .result-count,
+html.dark .section-heading > span,
+html.dark footer > div:last-child,
+html.dark .dashboard-heading p,
+html.dark .stats span,
+html.dark .stats small,
+html.dark .panel > p,
+html.dark .table-item small,
+html.dark .form label,
+html.dark .auth-content p,
+html.dark .detail-copy > p {
+  color: var(--muted);
+}
+
+html.dark nav button,
+html.dark .signin,
+html.dark .search-location,
+html.dark .category,
+html.dark .listing-tools,
+html.dark .outline,
+html.dark .filter-panel,
+html.dark .text-button,
+html.dark .side-link,
+html.dark .row-actions button,
+html.dark .detail-bottom button,
+html.dark .footer-brand p,
+html.dark .profile-nav,
+html.dark .message-thread small {
+  color: #a9b9ad;
+}
+
+html.dark .searchbar,
+html.dark .category > span,
+html.dark .product-card,
+html.dark .outline,
+html.dark .listing-tools select,
+html.dark .form input,
+html.dark .form select,
+html.dark .form textarea,
+html.dark .message-compose input {
+  border-color: var(--line);
+}
+
+html.dark .searchbar input,
+html.dark .search-location select,
+html.dark .form input,
+html.dark .form select,
+html.dark .form textarea,
+html.dark .message-compose input {
+  background: #111b15;
+  color: var(--ink);
+}
+
+html.dark .search-location {
+  border-left-color: var(--line);
+}
+
+html.dark .hero {
+  background: #1b3325;
+}
+
+html.dark .hero h1,
+html.dark .hero p,
+html.dark .hero-pills,
+html.dark .eyebrow {
+  color: #d5ead9;
+}
+
+html.dark .orb {
+  background: #2b4a31;
+}
+
+html.dark .hero-chair {
+  mix-blend-mode: normal;
+}
+
+html.dark .floating-tag,
+html.dark .tiny-tag,
+html.dark .condition,
+html.dark .save,
+html.dark .modal-close {
+  background: #25372a;
+  color: var(--ink);
+  box-shadow: 0 8px 25px #0004;
+}
+
+html.dark .floating-tag strong,
+html.dark .tiny-tag,
+html.dark .tag-icon {
+  color: #dcecdf;
+}
+
+html.dark .category.selected > span,
+html.dark .outline.active,
+html.dark .side-link.active {
+  background: #254b34;
+  border-color: #4b7d59;
+  color: #dcf1df;
+}
+
+html.dark .product-photo,
+html.dark .detail-image,
+html.dark .detail-gallery-empty {
+  background: #24342a;
+}
+
+html.dark .product-price strong,
+html.dark .detail-price,
+html.dark .nav-active,
+html.dark .product-meta span:first-child,
+html.dark .footer-brand strong span {
+  color: #8bd5a3;
+}
+
+html.dark .negotiable,
+html.dark .fixed,
+html.dark .support,
+html.dark .info,
+html.dark .upload,
+html.dark .safety-note {
+  background: #223829;
+  color: #b9d8bd;
+  border-color: #385940;
+}
+
+html.dark .sell-banner,
+html.dark .filter-panel {
+  background: #1c3324;
+  border-color: #2f4b37;
+}
+
+html.dark .banner-symbol,
+html.dark .dashboard-user .avatar,
+html.dark .avatar {
+  background: #2d5037;
+  color: #b8e6c2;
+}
+
+html.dark footer {
+  border-top-color: var(--line);
+}
+
+html.dark .dashboard aside {
+  border-right-color: var(--line);
+}
+
+html.dark .table-wrap th {
+  background: #223128;
+  color: #b5c6b9;
+}
+
+html.dark td {
+  border-bottom-color: #273a2d;
+}
+
+html.dark .panel,
+html.dark .stats > div {
+  box-shadow: 0 8px 25px #0002;
+}
+
+html.dark .modal-backdrop {
+  background: #06100bd9;
+}
+
+html.dark .detail-copy,
+html.dark .detail-copy .contact-card {
+  background: #18251d;
+}
+
+html.dark .detail-copy .contact-card {
+  border-color: var(--line);
+}
+
+html.dark .auth-content,
+html.dark .auth-content .form {
+  color: var(--ink);
+}
+
+html.dark .photo-thumbs img {
+  border-color: var(--line);
+}
+
+html.dark .mobile-nav {
+  background: #18251d;
+  border-top-color: var(--line);
+}
+
+html.dark .message-list {
+  background: #1e3325;
+}
+
+html.dark .message-bubble.mine {
+  background: #2f6841;
+}
+
+html.dark .message-bubble p,
+html.dark .message-bubble small {
+  color: var(--ink);
+}
+
+html.dark .past-q-page {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+@media (max-width: 560px) {
+  .theme-toggle {
+    right: 14px;
+    bottom: 14px;
+  }
+}
