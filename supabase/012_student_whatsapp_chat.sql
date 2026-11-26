@@ -186,7 +186,11 @@ begin
         sm.user_id,
         sm.body,
         sm.created_at,
-        sm.body = '[view-once]' as viewed,
+        exists (
+          select 1
+          from public.student_view_once_views viewed_row
+          where viewed_row.message_id = sm.id and viewed_row.user_id = current_user_id
+        ) as viewed,
         jsonb_build_object('id', p.id, 'name', p.name, 'username', p.username, 'avatar_url', p.avatar_url) as "user"
       from (
         select * from public.student_messages

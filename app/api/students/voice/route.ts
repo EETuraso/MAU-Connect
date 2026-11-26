@@ -21,17 +21,20 @@ export async function POST(request: Request) {
     if (!extension) return Response.json({ error: 'This recording format is not supported.' }, { status: 400 });
     path = `${user.id}/${crypto.randomUUID()}.${extension}`;
     await supabase(`/storage/v1/object/student-voice/${path}`, token, { method: 'POST', headers: { 'Content-Type': type }, body: file });
+    let messageId: string | undefined;
     try {
       if (chatId) {
-        await supabase('/rest/v1/rpc/student_chat_send', token, { method: 'POST', body: JSON.stringify({ target_chat_id: chatId, message_body: prefix + path }) });
+        const id = await supabase('/rest/v1/rpc/student_chat_send', token, { method: 'POST', body: JSON.stringify({ target_chat_id: chatId, message_body: prefix + path }) });
+        messageId = typeof id === 'string' ? id : undefined;
       } else {
-        await supabase('/rest/v1/student_messages', token, { method: 'POST', body: JSON.stringify({ user_id: user.id, body: prefix + path }) });
+        const rows = await supabase('/rest/v1/student_messages', token, { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ user_id: user.id, body: prefix + path }) });
+        messageId = Array.isArray(rows) && typeof rows[0]?.id === 'string' ? rows[0].id : undefined;
       }
     } catch (error) {
       await supabase(`/storage/v1/object/student-voice/${path}`, token, { method: 'DELETE' }).catch(() => {});
       throw error;
     }
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, id: messageId });
   } catch { return Response.json({ error: 'Could not send the voice note. Please try again.' }, { status: 400 }); }
 }
 

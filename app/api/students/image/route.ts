@@ -17,23 +17,26 @@ export async function POST(request: Request) {
     if (form.get('view_once') === 'true') {
       if (file.size > 2 * 1024 * 1024) return Response.json({ error: 'View-once photos must be under 2 MB.' }, { status: 400 });
       const imageData = Buffer.from(await file.arrayBuffer()).toString('base64');
-      await supabase(chatId ? '/rest/v1/rpc/send_student_view_once_in_chat' : '/rest/v1/rpc/send_student_view_once', token, {
+      const id = await supabase(chatId ? '/rest/v1/rpc/send_student_view_once_in_chat' : '/rest/v1/rpc/send_student_view_once', token, {
         method: 'POST',
         body: JSON.stringify(chatId ? { image_data: imageData, image_type: file.type, target_chat_id: chatId } : { image_data: imageData, image_type: file.type }),
       });
-      return Response.json({ ok: true });
+      return Response.json({ ok: true, id: typeof id === 'string' ? id : undefined });
     }
     const path = `${user.id}/${crypto.randomUUID()}.${types[file.type]}`;
     await supabase(`/storage/v1/object/student-chat-images/${path}`, token, { method: 'POST', headers: { 'Content-Type': file.type }, body: file });
+    let messageId: string | undefined;
     try {
       if (chatId) {
-        await supabase('/rest/v1/rpc/student_chat_send', token, { method: 'POST', body: JSON.stringify({ target_chat_id: chatId, message_body: `[image]${path}` }) });
+        const id = await supabase('/rest/v1/rpc/student_chat_send', token, { method: 'POST', body: JSON.stringify({ target_chat_id: chatId, message_body: `[image]${path}` }) });
+        messageId = typeof id === 'string' ? id : undefined;
       } else {
-        await supabase('/rest/v1/student_messages', token, { method: 'POST', body: JSON.stringify({ user_id: user.id, body: `[image]${path}` }) });
+        const rows = await supabase('/rest/v1/student_messages', token, { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ user_id: user.id, body: `[image]${path}` }) });
+        messageId = Array.isArray(rows) && typeof rows[0]?.id === 'string' ? rows[0].id : undefined;
       }
     }
     catch (error) { await supabase(`/storage/v1/object/student-chat-images/${path}`, token, { method: 'DELETE' }).catch(() => {}); throw error; }
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, id: messageId });
   } catch { return Response.json({ error: 'Could not send this photo. Please try again.' }, { status: 400 }); }
 }
 

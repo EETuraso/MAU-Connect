@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         method: 'POST',
         body: JSON.stringify({ target_chat_id: chatId, message_body: message }),
       });
-      return Response.json({ ok: true, id });
+      return Response.json({ ok: true, id: typeof id === 'string' ? id : undefined });
     }
 
     if (action === 'direct') {

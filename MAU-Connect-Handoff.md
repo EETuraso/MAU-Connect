@@ -1,10 +1,10 @@
 # MAU Connect Project Handoff
 
-Prepared 25 November 2026 for the project owner and incoming developer. MAU Connect is a marketplace and student community application. This handoff identifies the services, release process and outstanding checks.
+Prepared 26 November 2026 for the project owner and incoming developer. MAU Connect is a marketplace and student community application. This handoff identifies the services, release process and outstanding checks.
 
 # Current status
 
-Vercel reported production commit `184b29b` (add-view-once-photos) as Ready during the latest diagnostics. The main branch was synchronized with origin and the working tree was clean. All 43 automated tests passed, and the editor reported no errors. The latest lint and typecheck runs did not complete during diagnostics; a previous TypeScript check passed. A local production build was not confirmed.
+The latest release adds the responsive WhatsApp-style Student Block shell, desktop footer navigation, optimistic chat sends, two-and-a-half-second message polling, message search and filters, functional photo and voice-note composers, and recipient-specific view-once state. The latest local checks passed: 43 automated tests, TypeScript typecheck, production build, and `git diff --check`. The full repository lint still contains unrelated pre-existing errors outside this release.
 
 Supabase migrations 010 and 011 were run successfully in the SQL editor. Confirm the full migration history before applying migrations elsewhere.
 
@@ -30,7 +30,7 @@ The repository README covers setup and deployment. `app/students` contains the c
 
 # Recent changes
 
-Profile portraits and member avatars have fixed display sizes and crop uploaded images to fit. Student group photos can be sent with View once enabled. The implementation records opening separately for each recipient in the database; the sender cannot reopen that photo through the chat interface. View-once behavior does not prevent screenshots or external recording. A live multi-account test is still required.
+Profile portraits and member avatars have fixed display sizes and crop uploaded images to fit. Student chats support direct and group conversations, text, emoji, photos, view-once photos, voice notes, message search, unread/group filters, deletion, read marking, wallpapers and member lists. The database records view-once opening separately for each recipient; the sender cannot reopen that photo through the chat interface. View-once behavior does not prevent screenshots or external recording. A live multi-account test is still required.
 
 # Local setup and release
 
@@ -44,7 +44,7 @@ Profile portraits and member avatars have fixed display sizes and crop uploaded 
 
 # Database and configuration
 
-The repository contains migrations 001 through 011. The README setup instructions currently list migrations only through 007. Migration 008 adds the student room; 009 configures voice storage; 010 adds message deletion, group membership and chat image storage; 011 adds view-once photos. Inspect the existing database and apply only missing migrations in order. Do not blindly rerun scripts against production.
+The repository contains migrations 001 through 012. The README setup instructions currently list migrations only through 007. Migration 008 adds the student room; 009 configures voice storage; 010 adds message deletion, group membership and chat image storage; 011 adds view-once photos; 012 adds WhatsApp-style conversations and media RPCs. Inspect the existing database and apply only missing migrations in order. Do not blindly rerun scripts against production.
 
 Supabase Auth needs the production site URL, allowed password-reset redirects, email confirmation and working SMTP for public registration and recovery. Verify the live settings and delivery to a real inbox. The repository README describes initial administrator provisioning.
 
