@@ -6,7 +6,7 @@ Prepared 26 November 2026 for the project owner and incoming developer. MAU Conn
 
 The latest release adds the responsive WhatsApp-style Student Block shell, desktop footer navigation, optimistic chat sends, two-and-a-half-second message polling, message search and filters, functional photo and voice-note composers, and recipient-specific view-once state. The latest local checks passed: 43 automated tests, TypeScript typecheck, production build, and `git diff --check`. The full repository lint still contains unrelated pre-existing errors outside this release.
 
-Supabase migrations 010 and 011 were run successfully in the SQL editor. Confirm the full migration history before applying migrations elsewhere.
+Supabase migrations 010 through 012 were run successfully in the SQL editor. The production view-once query was also corrected so opening state is tracked per recipient. Confirm the full migration history before applying migrations elsewhere.
 
 # Project access
 
