@@ -13,10 +13,14 @@ export async function GET(request: Request) {
     if (!user || !token) return Response.json({ user: null, chats: [], contacts: [] }, { headers: { 'Cache-Control': 'private, no-store' } });
     const query = new URL(request.url).searchParams;
     const chatId = query.get('messages') || '';
-    const payload = chatId
-      ? await supabase('/rest/v1/rpc/student_chat_messages', token, { method: 'POST', body: JSON.stringify({ target_chat_id: chatId }) })
-      : await supabase('/rest/v1/rpc/student_chat_bootstrap', token, { method: 'POST', body: '{}' });
-    return Response.json(chatId ? { messages: payload } : payload, {
+    const infoChatId = query.get('info') || '';
+    if (infoChatId && !uuid.test(infoChatId)) return Response.json({ error: 'Invalid chat.' }, { status: 400 });
+    const payload = infoChatId
+      ? await supabase('/rest/v1/rpc/student_chat_info', token, { method: 'POST', body: JSON.stringify({ target_chat_id: infoChatId }) })
+      : chatId
+        ? await supabase('/rest/v1/rpc/student_chat_messages', token, { method: 'POST', body: JSON.stringify({ target_chat_id: chatId }) })
+        : await supabase('/rest/v1/rpc/student_chat_bootstrap', token, { method: 'POST', body: '{}' });
+    return Response.json(infoChatId ? { info: payload } : chatId ? { messages: payload } : payload, {
       headers: { 'Cache-Control': 'private, no-store' },
     });
   } catch (error) {
@@ -63,6 +67,28 @@ export async function POST(request: Request) {
         method: 'POST',
         body: JSON.stringify({ target_chat_id: chatId }),
       });
+      return Response.json({ ok: true });
+    }
+
+    if (action === 'delete') {
+      const messageId = typeof body.id === 'string' ? body.id : '';
+      const deleteFor = body.delete_for === 'everyone' ? 'everyone' : body.delete_for === 'me' ? 'me' : '';
+      if (!uuid.test(messageId) || !deleteFor) return Response.json({ error: 'Invalid delete option.' }, { status: 400 });
+      const message = await supabase('/rest/v1/rpc/student_chat_message', token, {
+        method: 'POST',
+        body: JSON.stringify({ target_message_id: messageId }),
+      });
+      await supabase('/rest/v1/rpc/student_chat_delete', token, {
+        method: 'POST',
+        body: JSON.stringify({ target_message_id: messageId, delete_for: deleteFor }),
+      });
+      if (deleteFor === 'everyone' && message?.user_id === user.id && typeof message.body === 'string') {
+        const media = /^\[(voice|image|video)\]([0-9a-f-]{36}\/[^/]+\.(?:webm|ogg|mp4|mov|jpg|png|webp))$/i.exec(message.body);
+        if (media && media[2].startsWith(`${user.id}/`)) {
+          const bucket = media[1] === 'voice' ? 'student-voice' : media[1] === 'image' ? 'student-chat-images' : 'student-chat-videos';
+          await supabase(`/storage/v1/object/${bucket}/${media[2]}`, token, { method: 'DELETE' }).catch(() => {});
+        }
+      }
       return Response.json({ ok: true });
     }
 
