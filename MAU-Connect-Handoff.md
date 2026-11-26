@@ -6,7 +6,7 @@ Prepared 26 November 2026 for the project owner and incoming developer. MAU Conn
 
 The latest release adds a dark, full-height WhatsApp-style Student Block chat, desktop and mobile footer navigation, optimistic chat sends, two-and-a-half-second message polling, message search and filters, photo, video and voice-note composers, recipient-specific view-once state, chat/contact information, and per-user or everyone message deletion. The current local checks include 43 automated tests, TypeScript typecheck, and `git diff --check`; rerun the production build after any final edits. The full repository lint still contains unrelated pre-existing errors outside this release.
 
-Supabase migrations 010 through 012 were run successfully in the SQL editor. The production view-once query was also corrected so opening state is tracked per recipient. Migration 013 is included with this release and must be run once in the production Supabase SQL editor before using chat information, per-user deletion, or video messages; the dashboard session was unavailable during this handoff, so verify its result before the live feature check.
+Supabase migrations 010 through 013 were run successfully in the production SQL editor. The production view-once query was also corrected so opening state is tracked per recipient. A post-migration diagnostic confirmed the deletion table, member access policy, private video bucket, chat-info RPC and delete RPC.
 
 # Project access
 
