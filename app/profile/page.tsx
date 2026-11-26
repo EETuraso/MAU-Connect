@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Camera, CalendarDays, MessageCircle, Phone, Store, UserRound } from 'lucide-react';
 import styles from './profile.module.css';
+import ThemeToggle from '../../components/theme-toggle';
 
 type Profile = { id: string; name: string; username?: string; avatar_url?: string; phone?: string; payment_method?: string; payment_instructions?: string; created_at?: string; role: string };
 async function read<T>(response: Response): Promise<T> {
@@ -38,7 +39,7 @@ export default function ProfilePage() {
   if (!profile) return <main className={styles.page}><div className={styles.gate}><UserRound size={32}/><h1>Your profile</h1><p>{message || 'Sign in to see your profile.'}</p><Link href="/students">Go to sign in</Link><Link href="/">Back to marketplace</Link></div></main>;
   const joined = profile.created_at && !Number.isNaN(Date.parse(profile.created_at)) ? new Date(profile.created_at).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' }) : '';
   return <main className={styles.page}>
-    <Link className={styles.back} href="/"><ArrowLeft size={17}/> Back to marketplace</Link>
+    <div className={styles.topNav}><Link className={styles.back} href="/"><ArrowLeft size={17}/> Back to marketplace</Link><ThemeToggle/></div>
     <section className={styles.card} aria-label="Your profile">
       <div className={styles.cover}><span>MAU CONNECT COMMUNITY</span></div>
       <div className={styles.identity}>

@@ -13,3 +13,4 @@
 :global(html.dark) .form input,:global(html.dark) .form textarea{background:#111b15;border-color:#2d4436;color:#e8f1ea}
 :global(html.dark) .notice{background:#223829;color:#b9d8bd}
 :global(html.dark) .shortcut,:global(html.dark) .gate a{color:#8bd5a3}
+.topNav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.topNav .back{margin-bottom:0}.topNav .theme-toggle{width:38px;height:38px}

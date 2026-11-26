@@ -20,9 +20,7 @@ html.dark body {
 }
 
 .theme-toggle {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
+  position: static;
   z-index: 120;
   display: grid;
   place-items: center;
@@ -320,7 +318,7 @@ html.dark .past-q-page {
 
 @media (max-width: 560px) {
   .theme-toggle {
-    right: 14px;
-    bottom: 14px;
+    width: 38px;
+    height: 38px;
   }
 }

@@ -45,6 +45,16 @@
 .messageAvatar img{width:100%;height:100%;object-fit:cover}
 .message{align-items:flex-end;gap:8px}
 .message.mine{flex-direction:row-reverse;justify-content:flex-start}
+.mentionPicker{position:absolute;bottom:54px;left:8px;z-index:9;width:min(280px,calc(100vw - 32px));max-height:300px;overflow:auto;padding:6px;background:#fff;border:1px solid #d8dfdc;border-radius:12px;box-shadow:0 8px 25px #0002}
+.mentionOption{width:100%;display:flex;align-items:center;gap:10px;padding:8px;border:0;border-radius:8px;background:transparent;text-align:left;cursor:pointer}
+.mentionOption:hover,.mentionOptionActive{background:#edf4ef}
+.mentionAvatar{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;overflow:hidden;border-radius:50%;background:#d7e6dd;color:#527b65;font-size:12px;font-weight:700}
+.mentionAvatar img{width:100%;height:100%;object-fit:cover}
+.mentionCopy{display:grid;gap:3px;min-width:0}
+.mentionCopy strong{color:#216547;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mentionCopy small{color:#87928d;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mentionEmpty{margin:0;padding:12px;color:#87928d;font-size:11px;text-align:center}
+.mention{color:#008069;font-weight:700}
 
 /* The chat shell follows the selected site theme; the original dark shell is the dark variant. */
 :global(html:not(.dark)) .chatPage{background:#f9faf7;color:#263b31}
@@ -94,3 +104,9 @@
 :global(html:not(.dark)) .chatPage .accountActions{background:#f9faf7;border-top-color:#e4eae1;color:#527b65}
 :global(html:not(.dark)) .chatPage .accountActions a{color:#216547}
 :global(html.dark) .chatPage .messageAvatar{background:#075e54;color:#d9fdd3}
+:global(html.dark) .chatPage .mentionPicker{background:#202c33;border-color:#3a4a53;box-shadow:0 8px 25px #0006}
+:global(html.dark) .chatPage .mentionOption:hover,:global(html.dark) .chatPage .mentionOptionActive{background:#2a4b4a}
+:global(html.dark) .chatPage .mentionCopy strong{color:#53d769}
+:global(html.dark) .chatPage .mentionCopy small,:global(html.dark) .chatPage .mentionEmpty{color:#aebac1}
+:global(html.dark) .chatPage .mention{color:#53d769}
+.headerActions{margin-left:auto;display:flex;align-items:center;align-self:flex-start}.headerActions .theme-toggle{width:38px;height:38px}.chatTopActions .theme-toggle{width:35px;height:35px;padding:0;border-color:transparent;background:transparent;box-shadow:none;color:#54645d}.chatPage .chatTopActions .theme-toggle{color:#aebac1}@media(max-width:800px){.chatTopActions .theme-toggle{width:31px;height:31px}.headerActions .theme-toggle{width:36px;height:36px}}
